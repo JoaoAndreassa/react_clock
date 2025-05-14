@@ -8,55 +8,55 @@ function getRandomName(): string {
   return `Clock-${value}`;
 }
 
-type AppState = {
+type State = {
   hasClock: boolean;
   clockName: string;
 };
 
-export class App extends React.Component<{}, AppState> {
-  private nameInterval: number | undefined;
+export class App extends React.Component<{}, State> {
+  private nameTimerId: number | null = null;
 
-  state: AppState = {
+  state: State = {
     hasClock: true,
     clockName: 'Clock-0',
   };
 
-  componentDidMount() {
-    document.addEventListener('click', this.handleLeftClick);
+  componentDidMount(): void {
     document.addEventListener('contextmenu', this.handleRightClick);
+    document.addEventListener('click', this.handleLeftClick);
 
-    this.nameInterval = window.setInterval(() => {
-      const newName = getRandomName();
-
-      this.setState({ clockName: newName });
+    this.nameTimerId = window.setInterval(() => {
+      this.setState({
+        clockName: getRandomName(),
+      });
     }, 3300);
   }
 
-  handleLeftClick = () => {
-    this.setState({ hasClock: true });
-  };
+  componentWillUnmount(): void {
+    document.removeEventListener('contextmenu', this.handleRightClick);
+    document.removeEventListener('click', this.handleLeftClick);
 
-  handleRightClick = (event: MouseEvent) => {
+    if (this.nameTimerId) {
+      window.clearInterval(this.nameTimerId);
+    }
+  }
+
+  handleRightClick = (event: MouseEvent): void => {
     event.preventDefault();
     this.setState({ hasClock: false });
   };
 
-  componentWillUnmount() {
-    document.removeEventListener('click', this.handleLeftClick);
-    document.removeEventListener('contextmenu', this.handleRightClick);
+  handleLeftClick = (): void => {
+    this.setState({ hasClock: true });
+  };
 
-    clearInterval(this.nameInterval);
-  }
+  render(): React.ReactNode {
+    const { hasClock, clockName } = this.state;
 
-  render() {
     return (
       <div className="App">
         <h1>React clock</h1>
-        {this.state.hasClock ? (
-          <Clock name={this.state.clockName} />
-        ) : (
-          <p>Clock hidden</p>
-        )}
+        {hasClock && <Clock name={clockName} />}
       </div>
     );
   }
